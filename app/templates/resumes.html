@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3>Мои резюме</h3>
+  <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addResumeModal">
+    Добавить резюме
+  </button>
+</div>
+
+<ul class="list-group" id="resumeList"></ul>
+
+<!-- Modal -->
+<div class="modal fade" id="addResumeModal" tabindex="-1" aria-labelledby="addResumeLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form id="resumeForm" class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Новое резюме</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label">Заголовок</label>
+          <input type="text" name="title" class="form-control" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Содержимое</label>
+          <textarea name="content" class="form-control" rows="4" required></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="submit" class="btn btn-primary">Сохранить</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+async function loadResumes() {
+  const token = localStorage.getItem("token");
+  if (!token) return window.location.href = "/login";
+
+  const response = await fetch("/api/v1/resumes", {
+    headers: { Authorization: "Bearer " + token }
+  });
+
+  if (response.status === 401) {
+    localStorage.removeItem("token");
+    return window.location.href = "/login";
+  }
+
+  if (!response.ok) {
+    console.error("Ошибка при загрузке резюме:", await response.text());
+    return;
+  }
+
+  const data = await response.json();
+  const list = document.getElementById("resumeList");
+  list.innerHTML = "";
+  data.items.forEach(resume => {
+    const li = document.createElement("li");
+    li.className = "list-group-item";
+    li.innerHTML = `<a href="/resumes/${resume.id}">${resume.title}</a>`;
+    list.appendChild(li);
+  });
+}
+
+document.getElementById("resumeForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const token = localStorage.getItem("token");
+  const formData = new FormData(e.target);
+  const body = Object.fromEntries(formData.entries());
+
+  const response = await fetch("/api/v1/resumes", {
+    method: "POST",
+    headers: {
+      "Authorization": "Bearer " + token,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(body)
+  });
+
+  if (response.ok) {
+    e.target.reset();
+    bootstrap.Modal.getInstance(document.getElementById("addResumeModal")).hide();
+    loadResumes();
+  }
+});
+
+loadResumes();
+</script>
+{% endblock %}

@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% block content %}
+<h3 id="resumeTitle">Резюме</h3>
+
+<div class="card mb-3">
+  <div class="card-body">
+    <h5 class="card-title" id="resumeTitleText"></h5>
+    <p class="card-text" id="resumeContent"></p>
+    <div class="resume-meta mt-3 pt-3 border-top">
+      <div class="row">
+        <div class="col-md-6">
+          <small class="text-muted">
+            <strong>Создано:</strong> 
+            <span id="resumeCreated"></span>
+          </small>
+        </div>
+        <div class="col-md-6">
+          <small class="text-muted">
+            <strong>Обновлено:</strong> 
+            <span id="resumeModified"></span>
+          </small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="d-flex gap-2">
+  <button id="improveBtn" class="btn btn-warning">Улучшить резюме</button>
+  <button id="backBtn" class="btn btn-secondary">Назад</button>
+</div>
+
+<div id="errorAlert" class="alert alert-danger mt-3 d-none"></div>
+
+<script>
+const resumeId = {{ resume_id }};
+const token = localStorage.getItem("token");
+if (!token) window.location.href = "/login";
+
+function formatDateTime(dateString) {
+  const date = new Date(dateString);
+  return date.toLocaleString('ru-RU', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+}
+
+async function loadResume() {
+  const response = await fetch(`/api/v1/resumes/${resumeId}`, {
+    headers: { Authorization: "Bearer " + token }
+  });
+
+  if (response.status === 401) {
+    localStorage.removeItem("token");
+    return window.location.href = "/login";
+  }
+
+  if (!response.ok) {
+    document.getElementById("errorAlert").textContent = "Ошибка загрузки резюме.";
+    document.getElementById("errorAlert").classList.remove("d-none");
+    return;
+  }
+
+  const data = await response.json();
+  document.getElementById("resumeTitleText").textContent = data.title;
+  document.getElementById("resumeContent").textContent = data.content;
+  document.getElementById("resumeTitle").textContent = "Резюме: " + data.title;
+  if (data.created) {
+    document.getElementById("resumeCreated").textContent = formatDateTime(data.created);
+  }
+  if (data.modified) {
+    document.getElementById("resumeModified").textContent = formatDateTime(data.modified);
+  }
+}
+
+document.getElementById("improveBtn").addEventListener("click", async () => {
+  const response = await fetch(`/api/v1/resumes/${resumeId}/improve`, {
+    method: "POST",
+    headers: { Authorization: "Bearer " + token }
+  });
+
+  if (response.status === 401) {
+    localStorage.removeItem("token");
+    return window.location.href = "/login";
+  }
+
+  if (!response.ok) {
+    const error = await response.json();
+    document.getElementById("errorAlert").textContent = error.detail || "Ошибка при улучшении резюме.";
+    document.getElementById("errorAlert").classList.remove("d-none");
+    return;
+  }
+
+  const data = await response.json();
+  document.getElementById("resumeContent").textContent = data.content;
+  
+  if (data.modified) {
+    document.getElementById("resumeModified").textContent = formatDateTime(data.modified);
+  }
+  
+  document.getElementById("errorAlert").classList.add("d-none");
+});
+
+document.getElementById("backBtn").addEventListener("click", () => {
+  window.location.href = "/resumes";
+});
+
+loadResume();
+</script>
+
+<style>
+.resume-meta {
+  font-size: 0.9rem;
+}
+.border-top {
+  border-top: 1px solid #dee2e6 !important;
+}
+</style>
+{% endblock %}

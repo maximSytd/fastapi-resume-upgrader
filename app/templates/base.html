@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ title or "Resume App" }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="icon" href="/app/ui/favicon.ico" type="image/x-icon">
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+      <div class="container">
+        <a class="navbar-brand" href="/resumes">ResumeApp</a>
+        <button class="btn btn-outline-light" id="logoutBtn" style="display:none;">Выйти</button>
+      </div>
+    </nav>
+
+    <main class="container">
+      {% block content %}{% endblock %}
+    </main>
+
+    <script>
+      if (window.location.pathname === "/") {
+        const token = localStorage.getItem("token");
+        window.location.href = token ? "/resumes" : "/login";
+      }
+
+      const logoutBtn = document.getElementById("logoutBtn");
+      if (logoutBtn) {
+        if (localStorage.getItem("token")) {
+          logoutBtn.style.display = "inline-block";
+        }
+        logoutBtn.addEventListener("click", () => {
+          localStorage.removeItem("token");
+          window.location.href = "/login";
+        });
+      }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>
