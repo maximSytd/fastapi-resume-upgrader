@@ -1,19 +1,25 @@
 FROM python:3.11-slim AS python-base
 
 ENV PYTHONUNBUFFERED=1 \
+    POETRY_VIRTUALENVS_CREATE=false \
     PIP_DISABLE_PIP_VERSION_CHECK=on \
     PIP_NO_CACHE_DIR=off \
     USE_DOCKER=1 \
-    # Locale settings
-    LANG=ru_RU.UTF-8 \
-    LC_ALL=ru_RU.UTF-8 \
-    LC_TIME=ru_RU.UTF-8 \
-    LANGUAGE=ru_RU.UTF-8 \
-    # paths
+	# poetry:
+	POETRY_VERSION=2.1.2 \
+	POETRY_VIRTUALENVS_CREATE=false \
+	POETRY_CACHE_DIR='/var/cache/pypoetry' \
+	# Locale settings
+	LANG=ru_RU.UTF-8 \
+	LC_ALL=ru_RU.UTF-8 \
+	LC_TIME=ru_RU.UTF-8 \
+	LANGUAGE=ru_RU.UTF-8 \
+	# paths
+    # this is where our requirements + virtual environment will live
     PYSETUP_PATH="/opt/pysetup" \
     VENV_PATH="/opt/pysetup/.venv"
 
-ENV PATH="$VENV_PATH/bin:$PATH"
+ENV PATH="$POETRY_HOME/bin:$VENV_PATH/bin:$PATH"
 
 ###############################################
 # Builder Image
@@ -27,43 +33,26 @@ RUN apt-get update && apt-get upgrade -y \
     curl \
     gettext \
     gcc \
+  && pip install "poetry==$POETRY_VERSION" && poetry --version \
   # Cleaning cache:
   && apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false \
   && apt-get clean -y && rm -rf /var/lib/apt/lists/*
 
-# Install uv instead of poetry
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh
-ENV PATH="/root/.cargo/bin:$PATH"
+RUN curl -sSL https://install.python-poetry.org | python3 -
 
 WORKDIR $PYSETUP_PATH
-COPY pyproject.toml uv.lock ./
+COPY poetry.lock pyproject.toml ./
 
-# Create virtual environment and install dependencies
-RUN uv venv $VENV_PATH && \
-    uv sync --frozen --no-dev
+RUN poetry install --without dev
 
-###############################################
-# Development Image
-###############################################
 FROM builder-base AS development
 # we make this to reproduce the same structure as repo for aerich
-RUN uv sync --frozen
+RUN poetry install
 WORKDIR /app/
 
-###############################################
-# Production Image
-###############################################
-FROM python-base AS production
+FROM builder-base AS production
 # we make this to reproduce the same structure as repo for aerich
-
-# Copy virtual environment from builder
-COPY --from=builder-base $VENV_PATH $VENV_PATH
-
-# Copy application code - ВАЖНО: копируем ВСЕ необходимое
 COPY ./app /app/app
-COPY ./config /app/config  # Добавляем config папку
 COPY pyproject.toml /app/pyproject.toml
-COPY uv.lock /app/uv.lock  
-
 WORKDIR /app/
 CMD ["python", "app/main.py"]
