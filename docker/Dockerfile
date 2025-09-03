@@ -1,8 +1,8 @@
+
 FROM python:3.13-slim AS base
 
 ENV PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
-    USE_DOCKER=1 \
     LANG=ru_RU.UTF-8 \
     LC_ALL=ru_RU.UTF-8 \
     LC_TIME=ru_RU.UTF-8 \
@@ -22,16 +22,17 @@ ENV PATH="/root/.cargo/bin:$PATH"
 
 WORKDIR /app
 
-COPY pyproject.toml uv.lock ./
-RUN uv sync --frozen --no-dev
 
 FROM base AS development
 COPY . .
 RUN uv sync --frozen
-CMD ["uv", "run", "python", "app/main.py"]
+CMD ["uv", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+
 
 FROM base AS production
 COPY ./app ./app
 COPY pyproject.toml uv.lock ./
+
 RUN uv sync --frozen --no-dev
-CMD ["uv", "run", "python", "app/main.py"]
+
+CMD ["uv", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "${PORT}"]
