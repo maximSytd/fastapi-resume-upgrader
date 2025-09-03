@@ -50,7 +50,7 @@ RUN uv sync --frozen
 COPY . .
 
 # Run app with reload in dev (if needed inside main.py)
-CMD ["uv", "run", "python", "app/main.py"]
+CMD ["python", "app/main.py"]
 
 ###############################################
 # Production stage
@@ -63,4 +63,4 @@ WORKDIR $APP_PATH
 COPY . .
 
 # Run app via python
-CMD ["uv", "run", "python", "app/main.py"]
+CMD ["python", "app/main.py"]
