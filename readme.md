@@ -8,7 +8,6 @@ This project is based on [FastAPI Docker Boilerplate](https://github.com/Afaneor
 - [Running the Application](#running-the-application)
 - [Configuration](#configuration)
 - [Database Migrations](#database-migrations)
-- [Translations](#translations)
 - [CI/CD](#cicd)
 
 ## Setup
@@ -20,8 +19,8 @@ This project is based on [FastAPI Docker Boilerplate](https://github.com/Afaneor
 
 1. Clone the repository
    ```
-   git clone https://github.com/maximSytd/fastapi-task-manager.git &&
-   cd fastapi-task-manager && uv sync --active
+   git clone https://github.com/maximSytd/fastapi-resume-upgrader.git &&
+   cd fastapi-resume-upgrader && uv sync --active
    ```
 2. Create a `.env` file based on `.env.example`:
    ```
