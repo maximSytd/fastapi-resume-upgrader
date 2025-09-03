@@ -1,58 +1,66 @@
+# Base Python image
 FROM python:3.11-slim AS python-base
 
+# Environment variables
 ENV PYTHONUNBUFFERED=1 \
-    POETRY_VIRTUALENVS_CREATE=false \
     PIP_DISABLE_PIP_VERSION_CHECK=on \
     PIP_NO_CACHE_DIR=off \
     USE_DOCKER=1 \
- # poetry:
- POETRY_VERSION=2.1.2 \
- POETRY_VIRTUALENVS_CREATE=false \
- POETRY_CACHE_DIR='/var/cache/pypoetry' \
- # Locale settings
- LANG=ru_RU.UTF-8 \
- LC_ALL=ru_RU.UTF-8 \
- LC_TIME=ru_RU.UTF-8 \
- LANGUAGE=ru_RU.UTF-8 \
- # paths
-    # this is where our requirements + virtual environment will live
-    PYSETUP_PATH="/opt/pysetup" \
-    VENV_PATH="/opt/pysetup/.venv"
+    # Locale settings
+    LANG=ru_RU.UTF-8 \
+    LC_ALL=ru_RU.UTF-8 \
+    LC_TIME=ru_RU.UTF-8 \
+    LANGUAGE=ru_RU.UTF-8 \
+    # App path
+    APP_PATH="/app"
 
-ENV PATH="$POETRY_HOME/bin:$VENV_PATH/bin:$PATH"
+ENV PATH="/root/.local/bin:$PATH"
 
 ###############################################
-# Builder Image
+# Builder stage
 ###############################################
-FROM python-base AS builder-base
+FROM python-base AS builder
 
-RUN apt-get update && apt-get upgrade -y \
-  && apt-get install --no-install-recommends -y \
-    bash \
-    build-essential \
-    curl \
-    gettext \
-    gcc \
-  && pip install "poetry==$POETRY_VERSION" && poetry --version \
-  # Cleaning cache:
-  && apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false \
+# Install system dependencies and uv
+RUN apt-get update && apt-get install --no-install-recommends -y \
+      bash curl build-essential gcc \
+  && curl -LsSf https://astral.sh/uv/install.sh | sh \
+  && apt-get purge -y --auto-remove \
   && apt-get clean -y && rm -rf /var/lib/apt/lists/*
 
-RUN curl -sSL https://install.python-poetry.org | python3 -
+WORKDIR $APP_PATH
 
-WORKDIR $PYSETUP_PATH
-COPY poetry.lock pyproject.toml ./
+# Copy dependency files first (better caching)
+COPY pyproject.toml uv.lock* ./
 
-RUN poetry install --without dev
+# Install dependencies (without dev)
+RUN uv sync --frozen --no-dev
 
-FROM builder-base AS development
-# we make this to reproduce the same structure as repo for aerich
-RUN poetry install
-WORKDIR /app/
+###############################################
+# Development stage
+###############################################
+FROM builder AS development
 
-FROM builder-base AS production
-# we make this to reproduce the same structure as repo for aerich
-COPY ./app /app/app
-COPY pyproject.toml /app/pyproject.toml
-WORKDIR /app/
-CMD ["python", "app/main.py"]
+WORKDIR $APP_PATH
+
+# Install dev dependencies
+RUN uv sync --frozen
+
+# Copy source code
+COPY . .
+
+# Run app with reload in dev (if needed inside main.py)
+CMD ["uv", "run", "python", "app/main.py"]
+
+###############################################
+# Production stage
+###############################################
+FROM builder AS production
+
+WORKDIR $APP_PATH
+
+# Copy source code
+COPY . .
+
+# Run app via python
+CMD ["uv", "run", "python", "app/main.py"]
