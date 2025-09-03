@@ -28,10 +28,10 @@ RUN uv sync --frozen --no-dev
 FROM base AS development
 COPY . .
 RUN uv sync --frozen
-CMD ["uv", "run", "python", "app/main.py"]
+CMD ["cd", "app", "&&", "uv", "run", "python", "app/main.py"]
 
 FROM base AS production
 COPY ./app ./
 COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-dev
-CMD ["uv", "run", "python", "app/main.py"]
+CMD ["cd", "app", "&&", "uv", "run", "python", "app/main.py"]

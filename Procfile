@@ -1,2 +1,2 @@
 release: uv run aerich upgrade
-web: uv run uvicorn main:app --host 0.0.0.0 --port $PORT
+web: cd app && uv run uvicorn app.main:app --host 0.0.0.0 --port $PORT
