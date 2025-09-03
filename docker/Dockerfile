@@ -5,16 +5,16 @@ ENV PYTHONUNBUFFERED=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=on \
     PIP_NO_CACHE_DIR=off \
     USE_DOCKER=1 \
-	# poetry:
-	POETRY_VERSION=2.1.2 \
-	POETRY_VIRTUALENVS_CREATE=false \
-	POETRY_CACHE_DIR='/var/cache/pypoetry' \
-	# Locale settings
-	LANG=ru_RU.UTF-8 \
-	LC_ALL=ru_RU.UTF-8 \
-	LC_TIME=ru_RU.UTF-8 \
-	LANGUAGE=ru_RU.UTF-8 \
-	# paths
+ # poetry:
+ POETRY_VERSION=2.1.2 \
+ POETRY_VIRTUALENVS_CREATE=false \
+ POETRY_CACHE_DIR='/var/cache/pypoetry' \
+ # Locale settings
+ LANG=ru_RU.UTF-8 \
+ LC_ALL=ru_RU.UTF-8 \
+ LC_TIME=ru_RU.UTF-8 \
+ LANGUAGE=ru_RU.UTF-8 \
+ # paths
     # this is where our requirements + virtual environment will live
     PYSETUP_PATH="/opt/pysetup" \
     VENV_PATH="/opt/pysetup/.venv"
