@@ -7,7 +7,7 @@ from config.constants import ENV_FILE_PATH
 class BaseConfig(BaseSettings):
     env: str = "development"
     app_host: str = "0.0.0.0"
-    port: int = pydantic.Field(default=8000, env="PORT")
+    port: int = 8000
     workers: int = 1
     reload: bool = True
 
