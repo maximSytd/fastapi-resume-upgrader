@@ -1,4 +1,3 @@
-import pydantic
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from config.constants import ENV_FILE_PATH
