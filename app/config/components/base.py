@@ -6,7 +6,7 @@ from config.constants import ENV_FILE_PATH
 class BaseConfig(BaseSettings):
     env: str = "development"
     app_host: str = "0.0.0.0"
-    app_port: int = 8000
+    port: int
     workers: int = 1
     reload: bool = True
 

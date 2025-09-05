@@ -6,7 +6,7 @@ def main():
     uvicorn.run(
         app="server.server:app",
         host=settings.app_host,
-        port=settings.app_port,
+        port=settings.port,
         reload=settings.reload,
         workers=settings.workers,
     )
