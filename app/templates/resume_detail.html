@@ -6,6 +6,21 @@
   <div class="card-body">
     <h5 class="card-title" id="resumeTitleText"></h5>
     <p class="card-text" id="resumeContent"></p>
+
+    <!-- Форма редактирования (по умолчанию скрыта) -->
+    <div id="editForm" class="d-none">
+      <div class="mb-3">
+        <label for="editTitle" class="form-label">Название</label>
+        <input type="text" id="editTitle" class="form-control">
+      </div>
+      <div class="mb-3">
+        <label for="editContent" class="form-label">Содержание</label>
+        <textarea id="editContent" class="form-control" rows="5"></textarea>
+      </div>
+      <button id="saveBtn" class="btn btn-success">Сохранить</button>
+      <button id="cancelBtn" class="btn btn-secondary">Отмена</button>
+    </div>
+
     <div class="resume-meta mt-3 pt-3 border-top">
       <div class="row">
         <div class="col-md-6">
@@ -27,6 +42,7 @@
 
 <div class="d-flex gap-2">
   <button id="improveBtn" class="btn btn-warning">Улучшить резюме</button>
+  <button id="editBtn" class="btn btn-primary">Редактировать</button>
   <button id="backBtn" class="btn btn-secondary">Назад</button>
 </div>
 
@@ -68,6 +84,11 @@ async function loadResume() {
   document.getElementById("resumeTitleText").textContent = data.title;
   document.getElementById("resumeContent").textContent = data.content;
   document.getElementById("resumeTitle").textContent = "Резюме: " + data.title;
+
+  // заполнение формы редактирования
+  document.getElementById("editTitle").value = data.title;
+  document.getElementById("editContent").value = data.content;
+
   if (data.created) {
     document.getElementById("resumeCreated").textContent = formatDateTime(data.created);
   }
@@ -85,11 +106,9 @@ document.getElementById("improveBtn").addEventListener("click", async () => {
   if (response.status === 401) {
     localStorage.removeItem("token");
     return window.location.href = "/login";
-  }
-
-  if (!response.ok) {
+  }if (!response.ok) {
     const error = await response.json();
-    document.getElementById("errorAlert").textContent = error.detail || "Ошибка при улучшении резюме.";
+    document.getElementById("errorAlert").textContent = error.detail ||  "Ошибка при улучшении резюме.";
     document.getElementById("errorAlert").classList.remove("d-none");
     return;
   }
@@ -101,6 +120,57 @@ document.getElementById("improveBtn").addEventListener("click", async () => {
     document.getElementById("resumeModified").textContent = formatDateTime(data.modified);
   }
   
+  document.getElementById("errorAlert").classList.add("d-none");
+});
+
+// показать форму редактирования
+document.getElementById("editBtn").addEventListener("click", () => {
+  document.getElementById("editForm").classList.remove("d-none");
+  document.getElementById("resumeContent").classList.add("d-none");
+  document.getElementById("resumeTitleText").classList.add("d-none");
+});
+
+// отмена редактирования
+document.getElementById("cancelBtn").addEventListener("click", () => {
+  document.getElementById("editForm").classList.add("d-none");
+  document.getElementById("resumeContent").classList.remove("d-none");
+  document.getElementById("resumeTitleText").classList.remove("d-none");
+});
+
+// сохранить изменения
+document.getElementById("saveBtn").addEventListener("click", async () => {
+  const title = document.getElementById("editTitle").value;
+  const content = document.getElementById("editContent").value;
+
+  const response = await fetch(`/api/v1/resumes/${resumeId}`, {
+    method: "PUT",
+    headers: {
+      "Authorization": "Bearer " + token,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ title, content })
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    document.getElementById("errorAlert").textContent = error.detail ||  "Ошибка при сохранении.";
+    document.getElementById("errorAlert").classList.remove("d-none");
+    return;
+  }
+
+  const data = await response.json();
+  document.getElementById("resumeTitleText").textContent = data.title;
+  document.getElementById("resumeContent").textContent = data.content;
+  document.getElementById("resumeTitle").textContent = "Резюме: " + data.title;
+
+  if (data.modified) {
+    document.getElementById("resumeModified").textContent = formatDateTime(data.modified);
+  }
+
+  // скрываем форму
+  document.getElementById("editForm").classList.add("d-none");
+  document.getElementById("resumeContent").classList.remove("d-none");
+  document.getElementById("resumeTitleText").classList.remove("d-none");
   document.getElementById("errorAlert").classList.add("d-none");
 });
 
